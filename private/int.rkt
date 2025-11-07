@@ -16,7 +16,8 @@
 
          Int
          int->natural
-         int->integer)
+         int->integer
+         integer->int)
 
 
 (define-type UInt (∪ UInt8 UInt16 UInt32 UInt64))
@@ -81,8 +82,7 @@
                 (values
                  (op i (integer-bytes->integer n sign? big-endian?))
                  (max size (bytes-length n)))))
-            (let-values ([(min max) (get-range size sign?)])
-              (integer->integer-bytes (mod i min max) size sign? big-endian?))]))
+            (integer->int i size sign? big-endian?)]))
        (∀ (Int8 Int16 Int32 Int64)
           (case→
            (→ (Listof Byte<1>      ) Int8 )
@@ -129,8 +129,7 @@
                (- (integer-bytes->integer n1 sign? big-endian?)
                   (integer-bytes->integer n2 sign? big-endian?)))
              (define size (max (bytes-length n1) (bytes-length n2)))
-             (let-values ([(min max) (get-range size sign?)])
-               (integer->integer-bytes (mod i min max) size sign? big-endian?))]
+             (integer->int i size sign? big-endian?)]
             [(n . n*) (int- n (_int+ n*))]))
          (procedure-rename int- name))
        (∀ (Int8 Int16 Int32 Int64)
@@ -156,3 +155,8 @@
 (: int->integer (→ Int Integer))
 (define (int->natural i) (integer-bytes->integer i #f (current-big-endian?)))
 (define (int->integer i) (integer-bytes->integer i #t (current-big-endian?)))
+
+(: integer->int (→* (Integer Natural Boolean) (Boolean) Int))
+(define (integer->int i size sign? [big-endian? (current-big-endian?)])
+  (define-values (min max) (get-range size sign?))
+  (unsafe-cast (integer->integer-bytes (mod i min max) size sign? big-endian?) Int))
