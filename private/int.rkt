@@ -130,9 +130,8 @@
             [(n1 n2)
              (define big-endian? (current-big-endian?))
              (define i
-               (+ (integer-bytes->integer n1 sign? big-endian?)
-                  (bitwise-not (integer-bytes->integer n2 sign? big-endian?))
-                  1))
+               (- (integer-bytes->integer n1 sign? big-endian?)
+                  (integer-bytes->integer n2 sign? big-endian?)))
              (define size (max (bytes-length n1) (bytes-length n2)))
              (define-values (umax umin smax smin) (size->range size))
              (integer->integer-bytes
