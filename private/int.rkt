@@ -1,7 +1,6 @@
 #lang typed/racket/base
 
 (require "types.rkt"
-         racket/case
          (only-in typed/racket/base/optional
                   [cast unsafe-cast]))
 
@@ -47,14 +46,18 @@
             (inst (make 4 #t) SInt32)
             (inst (make 8 #t) SInt64))))
 
-(: size->range (→ Natural (Values Positive-Integer Zero Positive-Integer Negative-Integer)))
-(define (size->range size)
-  (case/eq size
-    [(1) (values #xff               0 #x7f               #x-80              )]
-    [(2) (values #xffff             0 #x7fff             #x-8000            )]
-    [(4) (values #xffffffff         0 #x7fffffff         #x-80000000        )]
-    [(8) (values #xffffffffffffffff 0 #x7fffffffffffffff #x-8000000000000000)]
-    [else (raise-argument-error 'size->range "(or/c 1 2 4 8)" size)]))
+(: get-range (→ Natural Boolean (Values Integer Integer)))
+(define (get-range size sign?)
+  (case (cons size sign?)
+    [((1 . #f)) (values 0                   #xff              )]
+    [((1 . #t)) (values #x-80               #x7f              )]
+    [((2 . #f)) (values 0                   #xffff            )]
+    [((2 . #t)) (values #x-8000             #x7fff            )]
+    [((4 . #f)) (values 0                   #xffffffff        )]
+    [((4 . #t)) (values #x-80000000         #x7fffffff        )]
+    [((8 . #f)) (values 0                   #xffffffffffffffff)]
+    [((8 . #t)) (values #x-8000000000000000 #x7fffffffffffffff)]
+    [else (raise-argument-error 'get-range "(or/c 1 2 4 8)" size)]))
 
 (: mod (→ Integer Integer Integer Integer))
 (define (mod i min max)
@@ -78,12 +81,8 @@
                 (values
                  (op i (integer-bytes->integer n sign? big-endian?))
                  (max size (bytes-length n)))))
-            (define-values (umax umin smax smin) (size->range size))
-            (integer->integer-bytes
-             (if sign?
-                 (mod i smin smax)
-                 (mod i umin umax))
-             size sign? big-endian?)]))
+            (let-values ([(min max) (get-range size sign?)])
+              (integer->integer-bytes (mod i min max) size sign? big-endian?))]))
        (∀ (Int8 Int16 Int32 Int64)
           (case→
            (→ (Listof Byte<1>      ) Int8 )
@@ -130,12 +129,8 @@
                (- (integer-bytes->integer n1 sign? big-endian?)
                   (integer-bytes->integer n2 sign? big-endian?)))
              (define size (max (bytes-length n1) (bytes-length n2)))
-             (define-values (umax umin smax smin) (size->range size))
-             (integer->integer-bytes
-              (if sign?
-                  (mod i smin smax)
-                  (mod i umin umax))
-              size sign? big-endian?)]
+             (let-values ([(min max) (get-range size sign?)])
+               (integer->integer-bytes (mod i min max) size sign? big-endian?))]
             [(n . n*) (int- n (_int+ n*))]))
          (procedure-rename int- name))
        (∀ (Int8 Int16 Int32 Int64)
