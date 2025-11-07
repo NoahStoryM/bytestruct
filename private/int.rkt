@@ -59,9 +59,9 @@
 (: mod (→ Integer Integer Integer Integer))
 (define (mod i min max)
   (cond
-    [(<= min i max) i]
     [(< i min) (- (+ max 1) (bitwise-and max (- min i)))]
-    [else (+ min (bitwise-and max i))]))
+    [(> i max) (+ min (bitwise-and max i))]
+    [else i]))
 
 (define zero8 (unsafe-cast #"\0" UInt8))
 (define one8  (unsafe-cast #"\1" UInt8))
