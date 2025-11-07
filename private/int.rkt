@@ -20,33 +20,6 @@
          integer->int)
 
 
-(define-type UInt (∪ UInt8 UInt16 UInt32 UInt64))
-(define-new-subtype UInt8  (byte<1>->uint8  Byte<1>))
-(define-new-subtype UInt16 (byte<2>->uint16 Byte<2>))
-(define-new-subtype UInt32 (byte<4>->uint32 Byte<4>))
-(define-new-subtype UInt64 (byte<8>->uint64 Byte<8>))
-
-(define-type SInt (∪ SInt8 SInt16 SInt32 SInt64))
-(define-new-subtype SInt8  (byte<1>->sint8  Byte<1>))
-(define-new-subtype SInt16 (byte<2>->sint16 Byte<2>))
-(define-new-subtype SInt32 (byte<4>->sint32 Byte<4>))
-(define-new-subtype SInt64 (byte<8>->sint64 Byte<8>))
-
-(define-values (uint8 uint16 uint32 uint64 sint8 sint16 sint32 sint64)
-  (let ()
-    (define (make [size : Natural] [sign? : Boolean])
-      (unsafe-cast
-       (λ (n) (integer->integer-bytes n size sign? (current-big-endian?)))
-       (∀ (Int) (→ Integer Int))))
-    (values (inst (make 1 #f) UInt8 )
-            (inst (make 2 #f) UInt16)
-            (inst (make 4 #f) UInt32)
-            (inst (make 8 #f) UInt64)
-            (inst (make 1 #t) SInt8 )
-            (inst (make 2 #t) SInt16)
-            (inst (make 4 #t) SInt32)
-            (inst (make 8 #t) SInt64))))
-
 (: get-range (→ Natural Boolean (Values Integer Integer)))
 (define (get-range size sign?)
   (case (cons size sign?)
@@ -63,6 +36,34 @@
 (: mod (→ Integer Integer Integer Integer))
 (define (mod i min max)
   (+ min (modulo (- i min) (add1 (- max min)))))
+
+
+(define-type UInt (∪ UInt8 UInt16 UInt32 UInt64))
+(define-new-subtype UInt8  (byte<1>->uint8  Byte<1>))
+(define-new-subtype UInt16 (byte<2>->uint16 Byte<2>))
+(define-new-subtype UInt32 (byte<4>->uint32 Byte<4>))
+(define-new-subtype UInt64 (byte<8>->uint64 Byte<8>))
+
+(define-type SInt (∪ SInt8 SInt16 SInt32 SInt64))
+(define-new-subtype SInt8  (byte<1>->sint8  Byte<1>))
+(define-new-subtype SInt16 (byte<2>->sint16 Byte<2>))
+(define-new-subtype SInt32 (byte<4>->sint32 Byte<4>))
+(define-new-subtype SInt64 (byte<8>->sint64 Byte<8>))
+
+(define-values (uint8 uint16 uint32 uint64 sint8 sint16 sint32 sint64)
+  (let ()
+    (define (make [size : Natural] [sign? : Boolean])
+      (unsafe-cast
+       (λ (i) (integer->int i size sign?))
+       (∀ (Int) (→ Integer Int))))
+    (values (inst (make 1 #f) UInt8 )
+            (inst (make 2 #f) UInt16)
+            (inst (make 4 #f) UInt32)
+            (inst (make 8 #f) UInt64)
+            (inst (make 1 #t) SInt8 )
+            (inst (make 2 #t) SInt16)
+            (inst (make 4 #t) SInt32)
+            (inst (make 8 #t) SInt64))))
 
 (define zero8 (unsafe-cast #"\0" UInt8))
 (define one8  (unsafe-cast #"\1" UInt8))
