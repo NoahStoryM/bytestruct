@@ -76,13 +76,12 @@
            [(null? (cdr n*)) (car n*)]
            [else
             (define big-endian? (current-big-endian?))
-            (define size
-              (for/fold ([size 1]) ([n (in-list n*)])
-                (max size (bytes-length n))))
+            (define-values (i size)
+              (for/fold ([i (op)] [size 1]) ([n (in-list n*)])
+                (values
+                 (op i (integer-bytes->integer n sign? big-endian?))
+                 (max size (bytes-length n)))))
             (define-values (umax umin smax smin) (size->range size))
-            (define i
-              (for/fold ([i (op)]) ([n (in-list n*)])
-                (op i (integer-bytes->integer n sign? big-endian?))))
             (integer->integer-bytes
              (if sign?
                  (mod i smin smax)
@@ -130,12 +129,12 @@
             [(n) (int- zero8 n)]
             [(n1 n2)
              (define big-endian? (current-big-endian?))
-             (define size (max (bytes-length n1) (bytes-length n2)))
-             (define-values (umax umin smax smin) (size->range size))
              (define i
                (+ (integer-bytes->integer n1 sign? big-endian?)
                   (bitwise-not (integer-bytes->integer n2 sign? big-endian?))
                   1))
+             (define size (max (bytes-length n1) (bytes-length n2)))
+             (define-values (umax umin smax smin) (size->range size))
              (integer->integer-bytes
               (if sign?
                   (mod i smin smax)
