@@ -119,7 +119,7 @@
         (check-equal? (sint* (sint8 10) s8-neg2) (sint8 -20))
         (check-equal? (sint* s8-neg2 s8-neg2) (sint8 4))
         (check-equal? (sint* (sint8 64) s8-2) s8-neg128)
-        (check-equal? (sint* (sint8 32) (sint8 8)) s8-neg128)
+        (check-equal? (sint* (sint8 32) (sint8 8)) (sint8 0))
         (check-equal? (sint* s16-100 s8-neg2) (sint16 -200)))
 
       (test-case "sint-"
