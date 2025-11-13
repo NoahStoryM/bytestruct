@@ -118,12 +118,12 @@
        (λ (name _int+ sign?)
          (define int-
            (case-λ
-            [(n) (int- 0:u8 n)]
-            [(n . n*)
-             (define big-endian? (current-big-endian?))
-             (define i (integer-bytes->integer n sign? big-endian?))
-             (define size (bytes-length n))
-             (bytes*->int n* - i size sign? big-endian?)]))
+             [(n) (int- 0:u8 n)]
+             [(n . n*)
+              (define big-endian? (current-big-endian?))
+              (define i (integer-bytes->integer n sign? big-endian?))
+              (define size (bytes-length n))
+              (bytes*->int n* - i size sign? big-endian?)]))
          (procedure-rename int- name))
        (∀ (Int8 Int16 Int32 Int64)
           (→ Symbol
