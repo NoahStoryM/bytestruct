@@ -1,0 +1,17 @@
+#+TITLE: Bytestruct
+#+AUTHOR: Noah Ma
+#+EMAIL: noahstorym@gmail.com
+
+* Table of Contents                                       :TOC_5_gh:noexport:
+- [[#bytestruct][Bytestruct]]
+- [[#installation][Installation]]
+
+* Bytestruct
+A library for structured data in bytes.
+
+* Installation
+You can install it using =raco=:
+
+#+begin_src shell
+raco pkg install bytestruct
+#+end_src
