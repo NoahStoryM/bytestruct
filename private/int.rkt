@@ -65,35 +65,30 @@
             (inst (make 4 #t) SInt32)
             (inst (make 8 #t) SInt64))))
 
-(define zero8 (unsafe-cast #"\0" UInt8))
-(define one8  (unsafe-cast #"\1" UInt8))
+(define 0:u8 (unsafe-cast #"\0" UInt8))
+(define 1:u8 (unsafe-cast #"\1" UInt8))
 
 (define-values (_uint+ _uint* _sint+ _sint*)
   (let ()
-    (define (make [op : (→ Natural * Natural)] [id8 : UInt8] [sign? : Boolean])
+    (define (make [op : (→ Integer Integer Integer)]
+                  [id:8 : UInt8]
+                  [sign? : Boolean])
       (unsafe-cast
        (λ (n*)
          (cond
-           [(null? n*) id8]
+           [(null? n*) id:8]
            [(null? (cdr n*)) (car n*)]
-           [else
-            (define big-endian? (current-big-endian?))
-            (define-values (i size)
-              (for/fold ([i (op)] [size 1]) ([n (in-list n*)])
-                (values
-                 (op i (integer-bytes->integer n sign? big-endian?))
-                 (max size (bytes-length n)))))
-            (integer->int i size sign? big-endian?)]))
+           [else (bytes*->int n* op (op) 1 sign?)]))
        (∀ (Int8 Int16 Int32 Int64)
           (case→
            (→ (Listof Byte<1>      ) Int8 )
            (→ (Listof Byte<1/2>    ) Int16)
            (→ (Listof Byte<1/2/4>  ) Int32)
            (→ (Listof Byte<1/2/4/8>) Int64)))))
-    (values (inst (make + zero8 #f) UInt8 UInt16 UInt32 UInt64)
-            (inst (make * one8  #f) UInt8 UInt16 UInt32 UInt64)
-            (inst (make + zero8 #t) SInt8 SInt16 SInt32 SInt64)
-            (inst (make * one8  #t) SInt8 SInt16 SInt32 SInt64))))
+    (values (inst (make + 0:u8 #f) UInt8 UInt16 UInt32 UInt64)
+            (inst (make * 1:u8 #f) UInt8 UInt16 UInt32 UInt64)
+            (inst (make + 0:u8 #t) SInt8 SInt16 SInt32 SInt64)
+            (inst (make * 1:u8 #t) SInt8 SInt16 SInt32 SInt64))))
 
 (define-values (uint+ uint* sint+ sint*)
   (let ()
@@ -123,15 +118,12 @@
        (λ (name _int+ sign?)
          (define int-
            (case-λ
-            [(n) (int- zero8 n)]
-            [(n1 n2)
+            [(n) (int- 0:u8 n)]
+            [(n . n*)
              (define big-endian? (current-big-endian?))
-             (define i
-               (- (integer-bytes->integer n1 sign? big-endian?)
-                  (integer-bytes->integer n2 sign? big-endian?)))
-             (define size (max (bytes-length n1) (bytes-length n2)))
-             (integer->int i size sign? big-endian?)]
-            [(n . n*) (int- n (_int+ n*))]))
+             (define i (integer-bytes->integer n sign? big-endian?))
+             (define size (bytes-length n))
+             (bytes*->int n* - i size sign? big-endian?)]))
          (procedure-rename int- name))
        (∀ (Int8 Int16 Int32 Int64)
           (→ Symbol
@@ -161,3 +153,21 @@
 (define (integer->int i size sign? [big-endian? (current-big-endian?)])
   (define-values (min max) (get-range size sign?))
   (unsafe-cast (integer->integer-bytes (mod i min max) size sign? big-endian?) Int))
+
+(: bytes*->int
+   (→* ((Listof Bytes)
+        (→ Integer Integer Integer)
+        Integer
+        Natural
+        Boolean)
+       (Boolean)
+       Int))
+(define (bytes*->int n* op i size sign? [big-endian? (current-big-endian?)])
+  (for/fold ([i : Integer i]
+             [size : Natural size]
+             #:result
+             (integer->int i size sign? big-endian?))
+            ([n (in-list n*)])
+    (values
+     (op i (integer-bytes->integer n sign? big-endian?))
+     (max size (bytes-length n)))))
